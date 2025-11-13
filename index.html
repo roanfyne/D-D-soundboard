@@ -182,8 +182,8 @@
                         </div>
 
                         <div class="my-1 d-flex flex-row justify-content-between">
-                          <button class="audio btn btn-sm btn-outline-dark" @click="fadeIn(groupIndex, soundIndex)" title="fade in">
-                            <i class="fade-in-icon"></i>
+                          <button class="fav-class" @click="favorite(groupIndex, soundIndex)" title="Favorite">
+                            <i class="fa fa-heart"></i>
                           </button>
                           <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, -0.1)" title="-10%">
                             <i class="fa fa-volume-down"></i>
