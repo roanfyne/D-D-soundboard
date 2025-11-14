@@ -26,22 +26,6 @@
       width: 36px;
       height: 36px;
     }
-    .fav-icon {
-      position: relative;
-      display: inline-block;
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-top: 6px solid transparent;
-      border-bottom: 6px solid #333;
-      border-right: 6px solid #333;
-      transition: transform 0.3s ease;
-    }
-    .btn:hover > .fav-icon,
-    .fav-icon:hover {
-      border-bottom: 6px solid #fff;
-      border-right: 6px solid #fff;
-    }
     .fade-out-icon {
       position: relative;
       display: inline-block;
@@ -182,17 +166,17 @@
                         </div>
 
                         <div class="my-1 d-flex flex-row justify-content-between">
-                          <button class="fav-class" @click="favorite(groupIndex, soundIndex)" title="Favorite">
+                          <button class="favo btn btn-sm btn-outline-dark" @click="favorite(, )" title="Favorite">
                             <i class="fa fa-heart"></i>
                           </button>
-                          <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, -0.1)" title="-10%">
+                          <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, -0.3)" title="-10%">
                             <i class="fa fa-volume-down"></i>
                           </button>
                           <button class="audio btn btn-sm btn-outline-dark" @click="mute(groupIndex, soundIndex)" title="Mute">
                             <i class="fa fa-volume-off"></i>
                           </button>
-                          <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, 0.1)" title="+10%">
-                            <i class="fa fa-volume-up"></i>
+                          <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, 0.3)" title="+10%">
+                            <i class="fa fa--up"></i>
                           </button>
                           <button class="audio btn btn-sm btn-outline-dark" @click="fadeOut(groupIndex, soundIndex)" title="fade out">
                             <i class="fade-out-icon"></i>
@@ -333,7 +317,7 @@
 
       const groups = ref(GROUPS);
 
-      const adjustVolume = (groupIndex, soundIndex, amount) => {
+      const adjust = (groupIndex, soundIndex, amount) => {
         groups.value[groupIndex].sounds[soundIndex].soundEntries.forEach((soundEntry, soundEntryIndex) => {
           const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
           const audioElement = document.getElementById(audioElementId);
@@ -343,7 +327,7 @@
             return;
           }
 
-          audioElement.volume = Math.max(0, Math.min(1, audioElement.volume + amount));
+          audioElement. = Math.max(0, Math.min(1, audioElement. + amount));
         });
       };
 
@@ -357,21 +341,21 @@
             return;
           }
 
-          audioElement.volume = 0;
+          audioElement. = 0;
           audioElement.play();
           soundEntry.isPlaying = true;
 
           audioElement.fadeInInterval = setInterval(() => {
-            if (audioElement.volume >= 1) {
+            if (audioElement. >= 1) {
               clearInterval(audioElement.fadeInInterval);
 
               return;
             }
 
-            if (audioElement.volume + 0.015 > 1) {
-              audioElement.volume = 1;
+            if (audioElement. + 0.015 > 1) {
+              audioElement. = 1;
             } else {
-              audioElement.volume += 0.015;
+              audioElement. += 0.015;
             }
           }, 100);
         });
@@ -520,7 +504,7 @@
         background,
         setBackground,
         groups,
-        adjustVolume,
+        adjust,
         fav,
         fadeOut,
         mute,
