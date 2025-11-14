@@ -55,6 +55,7 @@ export const GROUPS = {
     title: 'Town',
     iconHtml: '🏰',
     collapsed: true,
+    favorite: false,   
     color: {
       header: {
         bg: COLOR.purple,
@@ -71,6 +72,7 @@ export const GROUPS = {
     title: 'Combat',
     iconHtml: '⚔',
     collapsed: true,
+    favorite: false,
     color: {
       header: {
         bg: COLOR.red,
@@ -87,6 +89,7 @@ export const GROUPS = {
     title: 'Traveling',
     iconHtml: '🏕',
     collapsed: true,
+    favorite: false,
     color: {
       header: {
         bg: COLOR.grayDark,
@@ -103,6 +106,7 @@ export const GROUPS = {
     title: 'Nature',
     iconHtml: '🏞',
     collapsed: true,
+    favorite: false,
     color: {
       header: {
         bg: COLOR.green,
@@ -119,6 +123,7 @@ export const GROUPS = {
     title: 'Music That Can Be Used For Intros and Stuff',
     iconHtml: '😜',
     collapsed: true,
+    favorite: false,
     color: {
       header: {
         bg: COLOR.green,
@@ -135,6 +140,7 @@ export const GROUPS = {
     title: 'Weather',
     iconHtml: '🌦',
     collapsed: true,
+    favorite: false,
     color: {
       header: {
         bg: COLOR.blue,
