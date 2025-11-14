@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DND Board</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- FontAwesome 4.7 CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- Vue3 -->
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+        "config": "./config.js"
+      }
+    }
+  </script>
+  <style>
+    * {
+      border-radius: 0 !important;
+    }
+    .audio.btn {
+      width: 36px;
+      height: 36px;
+    }
+
+    /* heart button visuals */
+    .favorite-heart {
+      color: #6c757d; /* muted default */
+      transition: color 160ms ease, transform 120ms ease;
+      display: inline-block;
+    }
+    .favorite-heart.active {
+      color: #dc3545; /* lit-up heart color */
+      transform: scale(1.12); /* small pop */
+    }
+
+    .fade-in-icon {
+      position: relative;
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid #333;
+      border-right: 6px solid #333;
+      transition: transform 0.3s ease;
+    }
+    .btn:hover > .fade-in-icon,
+    .fade-in-icon:hover {
+      border-bottom: 6px solid #fff;
+      border-right: 6px solid #fff;
+    }
+    .fade-out-icon {
+      position: relative;
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 6px solid #333;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid #333;
+      border-right: 6px solid transparent;
+      transition: transform 0.3s ease;
+    }
+    .btn:hover > .fade-out-icon,
+    .fade-out-icon:hover {
+      border-left: 6px solid #fff;
+      border-bottom: 6px solid #fff;
+    }
+    .accordion {
+      min-width: 249px !important;
+    }
+    .sound-card {
+      min-width: 234px !important;
+      max-width: 255px !important;
+    }
+    .progress {
+      min-width: 130px;
+    }
+
+    /* Offcanvas (favorites sidebar) width tweak */
+    .offcanvas-start {
+      width: 320px !important;
+    }
+
+    .fav-list-icon {
+      font-size: 1.1rem;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="container mt-5">
+    <div class="row mb-2">
+      <div class="col-12 text-center">
+        <h3>{{ pagetitle }}</h3>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="accordion shadow" v-for="(group, groupIndex) in groups" :key="groupIndex" :id="'accordion-' + groupIndex">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button
+                class="accordion-button"
+                :class="group.collapsed ? 'collapsed' : ''"
+                type="button"
+                @click="anySoundIsPlaying(groupIndex) ? group.collapsed = group.collapsed : group.collapsed = !group.collapsed"
+                :disabled="anySoundIsPlaying(groupIndex)"
+              >
+                <span class="me-2" v-html="group.iconHtml"></span>
+                <strong>{{ group.title }}</strong>
+              </button>
+            </h2>
+            <div
+              class="accordion-collapse collapse"
+              :class="anySoundIsPlaying(groupIndex) ? 'show' : (group.collapsed ? '' : 'show')"
+            >
+              <div class="accordion-body">
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                  <div
+                    class="col sound-card"
+                    v-for="(sound, soundIndex) in group.sounds"
+                    :key="soundIndex"
+                  >
+
+                    <div
+                      class="card shadow"
+                      :style="{ border: sound.color?.border ? '1px solid' + sound.color?.border : '1px solid' + group.color?.border }"
+                    >
+                      <div
+                        class="d-flex flex-row justify-content-between align-items-center border-bottom p-1"
+                        :style="{
+                          backgroundColor: sound.color?.header?.bg ? sound.color?.header?.bg : group.color?.header?.bg,
+                          borderColor: sound.color?.border ? sound.color?.border : group.color?.border,
+                          color: sound.color?.header?.text ? sound.color?.header?.text : group.color?.header?.text,
+                        }"
+                      >
+                        <div class="d-flex flex-row gap-2">
+                          <div v-if="sound.iconHtml" v-html="sound.iconHtml"></div>
+                          {{ sound.title }}
+                        </div>
+                        <div class="d-flex flex-row justify-content-end" style="min-width: 76px">
+                          <button
+                            v-if="sound.loopable"
+                            type="button"
+                            class="audio btn btn-sm me-1"
+                            :class="sound.soundEntries[0]?.loop ? 'btn-dark' : 'btn-outline-dark'"
+                            @click="toggleLoop(groupIndex, soundIndex, 0)"
+                            title="Loop"
+                          >
+                            <i class="fa fa-refresh"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="audio btn btn-sm btn-outline-dark"
+                            @click="anySoundEntryIsPlaying(groupIndex, soundIndex) ? sound.collapsed = sound.collapsed : sound.collapsed = !sound.collapsed"
+                            :disabled="anySoundEntryIsPlaying(groupIndex, soundIndex)"
+                          >
+                            <i class="fa" :class="sound.collapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div
+                        class="card-body p-1"
+                        v-if="anySoundEntryIsPlaying(groupIndex, soundIndex) ? true : !sound.collapsed"
+                      >
+                        <div v-for="(soundEntry, soundEntryIndex) of sound.soundEntries" :key="soundEntryIndex">
+                          <audio
+                            ref="audio"
+                            :src="soundEntry.url"
+                            :loop="soundEntry.loop"
+                            :id="'audio-' + groupIndex + '-' + soundIndex + '-' + soundEntryIndex"
+                            @ended="stop(groupIndex, soundIndex, soundEntryIndex)"
+                          ></audio>
+
+                          <div class="my-1 d-flex flex-row justify-content-between align-items-center">
+                            <button
+                              class="audio btn btn-sm btn-outline-dark"
+                              @click="playPause(groupIndex, soundIndex, soundEntryIndex)"
+                            >
+                              <i class="fa" :class="soundEntry.isPlaying ? 'fa-pause' : 'fa-play'"></i>
+                            </button>
+
+                            <div class="progress mx-2">
+                              <div
+                                class="progress-bar progress-bar-striped progress-bar-animated"
+                                :style="{ width: soundEntry.progress + '%' }"
+                              ></div>
+                            </div>
+
+                            <button
+                              class="audio btn btn-sm btn-outline-dark"
+                              @click="stop(groupIndex, soundIndex, soundEntryIndex)"
+                            >
+                              <i class="fa fa-stop"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="my-1 d-flex flex-row justify-content-between">
+                          <!-- Favorite button replaces fade-in: toggles visual heart only (no persistence) -->
+                          <button class="audio btn btn-sm btn-outline-dark" @click="toggleFavorite(groupIndex, soundIndex)" title="Favorite">
+                            <i class="fa favorite-heart" :class="sound.favorite ? ['fa-heart','active'] : ['fa-heart-o']"></i>
+                          </button>
+                          <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, -0.1)" title="-10%">
+                            <i class="fa fa-volume-down"></i>
+                          </button>
+                          <button class="audio btn btn-sm btn-outline-dark" @click="mute(groupIndex, soundIndex)" title="Mute">
+                            <i class="fa fa-volume-off"></i>
+                          </button>
+                          <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, 0.1)" title="+10%">
+                            <i class="fa fa-volume-up"></i>
+                          </button>
+                          <button class="audio btn btn-sm btn-outline-dark" @click="fadeOut(groupIndex, soundIndex)" title="fade out">
+                            <i class="fade-out-icon"></i>
+                          </button>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> 
+    </div>
+
+    <!-- Page configuration + Favorites toggle button -->
+    <div class="d-flex flex-row justify-content-end my-2">
+      <!-- Favorites Offcanvas toggle -->
+      <button class="btn btn-outline-danger me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#favoritesOffcanvas" aria-controls="favoritesOffcanvas" title="Favorites (max 6)">
+        <i class="fa fa-heart"></i>
+        <span v-if="favorites.length" class="badge bg-danger ms-1">{{ favorites.length }}</span>
+      </button>
+
+      <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#configModal">
+        <i class="fa fa-cog"></i>
+      </button>
+
+      <!-- Favorites Offcanvas -->
+      <div class="offcanvas offcanvas-start" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel">
+        <div class="offcanvas-header">
+          <h5 id="favoritesOffcanvasLabel"><i class="fa fa-heart me-2 text-danger"></i>Favorites</h5>
+          <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <div v-if="favorites.length === 0" class="text-muted">No favorites yet. Click the heart on any song to add it here (visual only, up to 6).</div>
+
+          <div v-else>
+            <div class="list-group">
+              <div class="list-group-item d-flex justify-content-between align-items-center" v-for="(fav, favIndex) in favorites" :key="favIndex">
+                <div>
+                  <span v-if="fav.iconHtml" class="fav-list-icon" v-html="fav.iconHtml"></span>
+                  <strong>{{ fav.title }}</strong>
+                  <div class="small text-muted">{{ groups[fav.groupIndex].title }}</div>
+                </div>
+
+                <div class="btn-group btn-group-sm" role="group" aria-label="fav controls">
+                  <button class="btn btn-outline-dark" @click="playPause(fav.groupIndex, fav.soundIndex, 0)">
+                    <i class="fa" :class="(groups[fav.groupIndex].sounds[fav.soundIndex].soundEntries[0].isPlaying) ? 'fa-pause' : 'fa-play'"></i>
+                  </button>
+                  <button class="btn btn-outline-dark" @click="stop(fav.groupIndex, fav.soundIndex, 0)"><i class="fa fa-stop"></i></button>
+                  <button class="btn btn-outline-danger" @click="toggleFavorite(fav.groupIndex, fav.soundIndex)" title="Remove favorite"><i class="fa fa-heart"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="small text-muted mt-2">Showing up to 6 favorites.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModal" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">
+                <i class="fa fa-cog me-2"></i>Config
+              </h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-info">
+                <strong><i class="fa fa-lightbulb-o me-2"></i></strong>
+                These changes won't be saved when closing the page.
+              </div>
+              <div class="mb-3">
+                <label for="config-page-title" class="form-label">Title</label>
+                <input
+                  id="config-page-title"
+                  type="text"
+                  class="form-control"
+                  @keyup="setPagetitle"
+                  @change="setPagetitle"
+                  v-model="pagetitle"
+                  title="Headline of this page"
+                />
+                <small class="text-body-tertiary">Title of the page and the browser's tab.</small>
+              </div>
+              <div class="mb-3">
+                <label for="config-page-background" class="form-label">Background</label>
+                <input
+                  id="config-page-background"
+                  type="text"
+                  class="form-control"
+                  @keyup="setBackground"
+                  @change="setBackground"
+                  v-model="background"
+                  title="Colorname, Hexcode or URL to image"
+                />
+                <small class="text-body-tertiary">Color, hex-code or even URL to an image for the background.</small>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" title="Close" class="btn btn-outline-success" data-bs-dismiss="modal">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createApp, ref, computed } from 'vue';
+  import { GROUPS, SOUNDS } from 'config';
+
+  createApp({
+    setup() {
+      const buildAudioElementId = (groupIndex, soundIndex, soundEntryIndex) => {
+        return `audio-${groupIndex}-${soundIndex}-${soundEntryIndex}`;
+      };
+
+      const logErrorMessageNonExistingAudioElement = (id) => {
+        console.error('There is no audio-Element with id \"' + id + '\"');
+      };
+
+      const pagetitle = ref('DND SoundBoard, provided by CTR');
+
+      const setPagetitle = () => {
+        document.title = pagetitle.value;
+      }
+
+      setPagetitle();
+
+      const background = ref('lightgrey');
+
+      const setBackground = () => {
+        if (background.value.includes('/')) {
+          document.body.style.backgroundImage = 'url(\"' + background.value + '\")';
+          document.body.style.backgroundSize = '100vw 100vh';
+          document.body.style.backgroundRepeat = 'no-repeat';
+
+          return;
+
+        }
+
+        document.body.style.backgroundColor = background.value;
+        document.body.style.backgroundImage = background.value;
+      }
+
+      setBackground();
+
+      SOUNDS.forEach(sound => {
+        if (!GROUPS[sound.groupName]) {
+          console.error(`Group \"${sound.groupName}\" is not defined in GROUPS.`);
+        }
+
+        GROUPS[sound.groupName].sounds = GROUPS[sound.groupName].sounds || [];
+        GROUPS[sound.groupName].sounds.push({
+          title: sound.title,
+          groupName: sound.groupName,
+          iconHtml: sound.iconHtml,
+          color: sound.color ? sound.color : null,
+          collapsed: true,
+          favorite: false,
+          loopable: sound.soundEntries.length > 1 ? false : sound.loopable,
+          soundEntries: sound.soundEntries.map((url) => ({
+            url,
+            loop: sound.soundEntries.length > 1 ? false : sound.loopable,
+            progress: 0,
+            isPlaying: false,
+          })),
+        });
+      });
+
+      const groups = ref(GROUPS);
+
+      // computed list of favorites (limit to 6)
+      const favorites = computed(() => {
+        const favs = [];
+        for (const groupKey in groups.value) {
+          const group = groups.value[groupKey];
+          if (!group.sounds) continue;
+          group.sounds.forEach((sound, sIndex) => {
+            if (sound.favorite) {
+              favs.push({
+                groupIndex: groupKey,
+                soundIndex: sIndex,
+                title: sound.title,
+                iconHtml: sound.iconHtml,
+                soundEntries: sound.soundEntries,
+              });
+            }
+          });
+        }
+        return favs.slice(0, 6);
+      });
+
+      const adjustVolume = (groupIndex, soundIndex, amount) => {
+        groups.value[groupIndex].sounds[soundIndex].soundEntries.forEach((soundEntry, soundEntryIndex) => {
+          const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+          const audioElement = document.getElementById(audioElementId);
+
+          if (!audioElement) {
+            logErrorMessageNonExistingAudioElement(audioElementId);
+            return;
+          }
+
+          audioElement.volume = Math.max(0, Math.min(1, audioElement.volume + amount));
+        });
+      };
+
+      const fadeIn = (groupIndex, soundIndex) => {
+        groups.value[groupIndex].sounds[soundIndex].soundEntries.forEach((soundEntry, soundEntryIndex) => {
+          const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+          const audioElement = document.getElementById(audioElementId);
+
+          if (!audioElement) {
+            logErrorMessageNonExistingAudioElement(audioElementId);
+            return;
+          }
+
+          audioElement.volume = 0;
+          audioElement.play();
+          soundEntry.isPlaying = true;
+
+          audioElement.fadeInInterval = setInterval(() => {
+            if (audioElement.volume >= 1) {
+              clearInterval(audioElement.fadeInInterval);
+
+              return;
+            }
+
+            if (audioElement.volume + 0.015 > 1) {
+              audioElement.volume = 1;
+            } else {
+              audioElement.volume += 0.015;
+            }
+          }, 100);
+        });
+      };
+
+      const fadeOut = (groupIndex, soundIndex) => {
+        groups.value[groupIndex].sounds[soundIndex].soundEntries.forEach((soundEntry, soundEntryIndex) => {
+          const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+          const audioElement = document.getElementById(audioElementId);
+
+          if (!audioElement) {
+            logErrorMessageNonExistingAudioElement(audioElementId);
+            return;
+          }
+
+          audioElement.fadeOutInterval = setInterval(() => {
+            if (audioElement.volume <= 0) {
+              clearInterval(audioElement.fadeOutInterval);
+              audioElement.pause();
+              audioElement.currentTime = 0;
+              soundEntry.isPlaying = false;
+
+              return;
+            }
+
+            if (audioElement.volume - 0.015 < 0) {
+              audioElement.volume = 0;
+            } else {
+              audioElement.volume -= 0.015;
+            }
+          }, 100);
+        });
+      };
+
+      const mute = (groupIndex, soundIndex) => {
+        groups.value[groupIndex].sounds[soundIndex].soundEntries.forEach((soundEntry, soundEntryIndex) => {
+          const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+          const audioElement = document.getElementById(audioElementId);
+
+          if (!audioElement) {
+            logErrorMessageNonExistingAudioElement(audioElementId);
+            return;
+          }
+
+          audioElement.muted = !audioElement.muted;
+        });
+      };
+
+      const playPause = (groupIndex, soundIndex, soundEntryIndex) => {
+        const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+        const audioElement = document.getElementById(audioElementId);
+
+        if (!audioElement) {
+          logErrorMessageNonExistingAudioElement(audioElementId);
+          return;
+        }
+
+        const soundEntry = groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex];
+
+        if (!soundEntry) {
+          console.error('GROUPS currently does not contain an element with the given indices.');
+        }
+
+        if (soundEntry.isPlaying) {
+          audioElement.pause();
+          groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex].isPlaying = false;
+          clearInterval(audioElement.progressInterval);
+          updateProgress(audioElement, soundEntry);
+        } else {
+          audioElement.play();
+          audioElement.volume = 0.5;
+          groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex].isPlaying = true;
+          audioElement.progressInterval = setInterval(() => {
+            updateProgress(audioElement, soundEntry);
+          }, 100);
+        }
+      };
+
+      const stop = (groupIndex, soundIndex, soundEntryIndex) => {
+        const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+        const audioElement = document.getElementById(audioElementId);
+
+        if (!audioElement) {
+          logErrorMessageNonExistingAudioElement(audioElementId);
+          return;
+        }
+
+        const soundEntry = groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex];
+
+        if (!soundEntry) {
+          console.error('GROUPS currently does not contain an element with the given indices.');
+        }
+
+        audioElement.pause();
+        audioElement.currentTime = 0;
+        groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex].isPlaying = false;
+        clearInterval(audioElement.progressInterval);
+        updateProgress(audioElement, soundEntry);
+      };
+
+      const updateProgress = (audioElement, soundEntry) => {
+        // protect against NaN if duration not available yet
+        soundEntry.progress = audioElement.duration ? (audioElement.currentTime / audioElement.duration) * 100 : 0;
+      };
+
+      const toggleLoop = (groupIndex, soundIndex, soundEntryIndex) => {
+        const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
+        const audioElement = document.getElementById(audioElementId);
+
+        if (!audioElement) {
+          logErrorMessageNonExistingAudioElement(audioElementId);
+          return;
+        }
+
+        const soundEntry = groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex];
+
+        if (!soundEntry) {
+          console.error('GROUPS currently does not contain an element with the given indices.');
+        }
+
+        groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex].loop =
+          !groups.value[groupIndex].sounds[soundIndex].soundEntries[soundEntryIndex].loop;
+      };
+
+      const anySoundIsPlaying = (groupIndex) => {
+        const sounds = groups.value[groupIndex].sounds;
+        for (const sound of sounds) {
+          for (const soundEntry of sound.soundEntries) {
+            if (soundEntry.isPlaying) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      }
+
+      const anySoundEntryIsPlaying = (groupIndex, soundIndex) => {
+        return groups.value[groupIndex].sounds[soundIndex].soundEntries.filter(
+          (soundEntry) => !!soundEntry.isPlaying
+        ).length > 0;
+      }
+
+      // Favorite toggle (visual only, not persisted)
+      const toggleFavorite = (groupIndex, soundIndex) => {
+        const sound = groups.value[groupIndex].sounds[soundIndex];
+        if (!sound) return;
+        sound.favorite = !sound.favorite;
+      };
+
+      return {
+        pagetitle,
+        setPagetitle,
+        background,
+        setBackground,
+        groups,
+        favorites,
+        adjustVolume,
+        fadeIn,
+        fadeOut,
+        mute,
+        playPause,
+        stop,
+        updateProgress,
+        toggleLoop,
+        anySoundIsPlaying,
+        anySoundEntryIsPlaying,
+        toggleFavorite,
+      };
+    }
+  }).mount('#app');
+</script>
+
+</body>
+</html>
