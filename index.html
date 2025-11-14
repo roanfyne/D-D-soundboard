@@ -147,19 +147,69 @@
         </div>
       </div> 
     </div>
-
-    <!-- Page configuration + Favorites toggle button -->
+    <!-- Page configuration -->
     <div class="d-flex flex-row justify-content-end my-2">
-      <!-- Favorites Offcanvas toggle -->
-      <button class="btn btn-outline-danger me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#favoritesOffcanvas" aria-controls="favoritesOffcanvas" title="Favorites (max 6)">
-        <i class="fa fa-heart"></i>
-        <span v-if="favoritesCount" class="badge bg-danger ms-1">{{ favoritesCount }}</span>
-      </button>
-
       <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#configModal">
         <i class="fa fa-cog"></i>
       </button>
 
+      <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModal" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">
+                <i class="fa fa-cog me-2"></i>Config
+              </h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-info">
+                <strong><i class="fa fa-lightbulb-o me-2"></i></strong>
+                These changes won't be saved when closing the page.
+              </div>
+              <div class="mb-3">
+                <label for="config-page-title" class="form-label">Title</label>
+                <input
+                  id="config-page-title"
+                  type="text"
+                  class="form-control"
+                  @keyup="setPagetitle"
+                  @change="setPagetitle"
+                  v-model="pagetitle"
+                  title="Headline of this page"
+                />
+                <small class="text-body-tertiary">Title of the page and the browser's tab.</small>
+              </div>
+              <div class="mb-3">
+                <label for="config-page-background" class="form-label">Background</label>
+                <input
+                  id="config-page-background"
+                  type="text"
+                  class="form-control"
+                  @keyup="setBackground"
+                  @change="setBackground"
+                  v-model="background"
+                  title="Colorname, Hexcode or URL to image"
+                />
+                <small class="text-body-tertiary">Color, hex-code or even URL to an image for the background.</small>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" title="Close" class="btn btn-outline-success" data-bs-dismiss="modal">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <button class="btn btn-outline-danger me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#favoritesOffcanvas" aria-controls="favoritesOffcanvas" title="Favorites (max 6)">
+        <i class="fa fa-heart"></i>
+        <span v-if="favoritesCount" class="badge bg-danger ms-1">{{ favoritesCount }}</span>
+      </button>
+  
       <!-- Favorites Offcanvas -->
       <div class="offcanvas offcanvas-start" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel">
         <div class="offcanvas-header">
@@ -193,47 +243,10 @@
           </div>
         </div>
       </div>
-
-      <!-- Config Modal -->
-      <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModal" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h1 class="modal-title fs-5" id="exampleModalLabel"><i class="fa fa-cog me-2"></i>Config</h1>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <div class="modal-body">
-              <div class="alert alert-info">
-                <strong><i class="fa fa-lightbulb-o me-2"></i></strong>
-                These changes won't be saved when closing the page (except favorites — favorites are saved to localStorage).
-              </div>
-
-              <div class="mb-3">
-                <label for="config-page-title" class="form-label">Title</label>
-                <input id="config-page-title" type="text" class="form-control" @keyup="setPagetitle" @change="setPagetitle" v-model="pagetitle" title="Headline of this page" />
-                <small class="text-body-tertiary">Title of the page and the browser's tab.</small>
-              </div>
-
-              <div class="mb-3">
-                <label for="config-page-background" class="form-label">Background</label>
-                <input id="config-page-background" type="text" class="form-control" @keyup="setBackground" @change="setBackground" v-model="background" title="Colorname, Hexcode or URL to image" />
-                <small class="text-body-tertiary">Color, hex-code or even URL to an image for the background.</small>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button type="button" title="Close" class="btn btn-outline-success" data-bs-dismiss="modal">
-                <i class="fa fa-times"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- End config modal -->
-    </div>
+     </div>
   </div>
 </div>
+      
 
 <script type="module">
   import { createApp, ref, computed, onMounted } from 'vue';
