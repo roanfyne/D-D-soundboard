@@ -68,6 +68,17 @@
     .progress {
       min-width: 130px;
     }
+  /* heart button visuals */
+  .favorite-heart {
+    color: #6c757d; /* muted default */
+    transition: color 160ms ease, transform 120ms ease;
+    display: inline-block;
+  }
+  .favorite-heart.active {
+    color: #dc3545; /* lit-up heart color */
+    transform: scale(1.12); /* small pop */
+  }
+</style>
   </style>
 </head>
 <body>
@@ -182,8 +193,14 @@
                         </div>
 
                         <div class="my-1 d-flex flex-row justify-content-between">
-                          <button class="audio btn btn-sm btn-outline-dark" @click="fadeIn(groupIndex, soundIndex)" title="fade in">
-                            <i class="fade-in-icon"></i>
+                          <button
+  class="audio btn btn-sm btn-outline-dark"
+  @click="toggleFavorite(groupIndex, soundIndex)"
+  title="Favorite"
+>
+  <i :class="['fa', sound.favorite ? 'fa-heart' : 'fa-heart-o']"
+     :class="{ 'favorite-heart': true, 'active': sound.favorite }"></i>
+</button>
                           </button>
                           <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, -0.1)" title="-10%">
                             <i class="fa fa-volume-down"></i>
