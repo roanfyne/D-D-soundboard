@@ -42,14 +42,6 @@
 
     /* small helper so heart button looks "filled" when active */
     .btn-outline-dark .favorite-heart.active { color: #dc3545; }
-
-    /* Toast position tweaks */
-    .toast-container-bottom-right {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      z-index: 1080;
-    }
   </style>
 </head>
 <body>
@@ -134,7 +126,7 @@
                         </div>
 
                         <div class="my-1 d-flex flex-row justify-content-between">
-                          <!-- Favorite button replaces fade-in: toggles visual heart (persisted), up to 6 -->
+                          <!-- Favorite button replaces fade-in: toggles visual heart only (persisted to localStorage, max 6) -->
                           <button class="audio btn btn-sm btn-outline-dark" @click="toggleFavorite(groupIndex, soundIndex)" title="Favorite">
                             <i class="fa favorite-heart" :class="sound.favorite ? ['fa-heart','active'] : ['fa-heart-o']"></i>
                           </button>
@@ -217,18 +209,13 @@
 </div>
 
     <div class="d-flex flex-row justify-content-end my-2">
-      <!-- Favorites Offcanvas toggle (now calls Vue method to toggle) -->
-      <button class="btn" :class="favoritesCount ? 'btn-danger me-2' : 'btn-outline-danger me-2'" type="button" @click="toggleFavoritesSidebar" title="Favorites (max 6)">
+      <!-- Favorites Offcanvas toggle -->
+      <button class="btn btn-outline-danger me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#favoritesOffcanvas" aria-controls="favoritesOffcanvas" title="Favorites (max 6)">
         <i class="fa fa-heart"></i>
         <span v-if="favoritesCount" class="badge bg-danger ms-1">{{ favoritesCount }}</span>
       </button>
 
-      <!-- Small collapse/uncollapse button for sidebar (explicit) -->
-      <button class="btn btn-outline-secondary me-2" type="button" @click="toggleFavoritesSidebar" :title="favoritesOpen ? 'Collapse favorites' : 'Open favorites'">
-        <i class="fa" :class="favoritesOpen ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
-      </button>
-
-      <!-- Favorites Offcanvas (same as before) -->
+      <!-- Favorites Offcanvas -->
       <div class="offcanvas offcanvas-start" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel">
         <div class="offcanvas-header">
           <h5 id="favoritesOffcanvasLabel"><i class="fa fa-heart me-2 text-danger"></i>Favorites</h5>
@@ -303,18 +290,6 @@
   </div>
 </div>
 
-<!-- Toast container for favorites-limit message -->
-<div class="toast-container-bottom-right">
-  <div id="favLimitToast" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div class="toast-body">
-        Maximum 6 favorites allowed. Remove one to add another.
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-  </div>
-</div>
-
 <script type="module">
   import { createApp, ref, computed, onMounted } from 'vue';
   import { GROUPS, SOUNDS } from 'config';
@@ -375,13 +350,11 @@
 
       // Utility: produce a stable id for storing favorites
       const soundUniqueId = (groupKey, soundIndex) => {
+        // use groupKey (object key from GROUPS) and title for safety
         const g = groups.value[groupKey];
         if (!g || !g.sounds || !g.sounds[soundIndex]) return null;
         return `${groupKey}||${g.sounds[soundIndex].title}`;
       };
-
-      // reactive state for whether the offcanvas is open
-      const favoritesOpen = ref(false);
 
       // Load saved favorites from localStorage and mark corresponding sounds
       onMounted(() => {
@@ -402,13 +375,6 @@
           }
         } catch (e) {
           console.warn('Could not load favorites from localStorage', e);
-        }
-
-        // wire listeners to offcanvas to keep favoritesOpen in sync
-        const offEl = document.getElementById('favoritesOffcanvas');
-        if (offEl) {
-          offEl.addEventListener('shown.bs.offcanvas', () => { favoritesOpen.value = true; });
-          offEl.addEventListener('hidden.bs.offcanvas', () => { favoritesOpen.value = false; });
         }
       });
 
@@ -434,6 +400,7 @@
       });
 
       const favoritesCount = computed(() => {
+        // full count (not limited) shown on badge
         let count = 0;
         for (const groupKey in groups.value) {
           const group = groups.value[groupKey];
@@ -460,26 +427,6 @@
           localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
         } catch (e) {
           console.warn('Could not save favorites to localStorage', e);
-        }
-      };
-
-      // show bootstrap toast for favorite-limit
-      const showFavoriteLimitToast = () => {
-        const toastEl = document.getElementById('favLimitToast');
-        if (!toastEl) return;
-        const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { autohide: true, delay: 3000 });
-        toast.show();
-      };
-
-      // toggle offcanvas sidebar (open/close)
-      const toggleFavoritesSidebar = () => {
-        const offEl = document.getElementById('favoritesOffcanvas');
-        if (!offEl) return;
-        const instance = bootstrap.Offcanvas.getOrCreateInstance(offEl);
-        if (favoritesOpen.value) {
-          instance.hide();
-        } else {
-          instance.show();
         }
       };
 
@@ -606,6 +553,7 @@
 
         // if turning on, ensure max 6
         if (!sound.favorite) {
+          // count current favorites
           let count = 0;
           for (const k in groups.value) {
             const g = groups.value[k];
@@ -613,7 +561,9 @@
             g.sounds.forEach(s => { if (s.favorite) count++; });
           }
           if (count >= 6) {
-            showFavoriteLimitToast();
+            // simple visual feedback: brief bootstrap alert (fallback to window.alert if needed)
+            // Using alert to keep it simple and visible
+            window.alert('Maximum 6 favorites allowed. Remove one to add another.');
             return;
           }
         }
@@ -630,8 +580,6 @@
         groups,
         favorites,
         favoritesCount,
-        favoritesOpen,
-        toggleFavoritesSidebar,
         adjustVolume,
         fadeIn,
         fadeOut,
