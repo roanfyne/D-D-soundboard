@@ -176,7 +176,7 @@
                             <i class="fa fa-volume-off"></i>
                           </button>
                           <button class="audio btn btn-sm btn-outline-dark" @click="adjustVolume(groupIndex, soundIndex, 0.3)" title="+10%">
-                            <i class="fa fa--up"></i>
+                            <i class="fa fa-volume-up"></i>
                           </button>
                           <button class="audio btn btn-sm btn-outline-dark" @click="fadeOut(groupIndex, soundIndex)" title="fade out">
                             <i class="fade-out-icon"></i>
@@ -317,7 +317,7 @@
 
       const groups = ref(GROUPS);
 
-      const adjust = (groupIndex, soundIndex, amount) => {
+      const adjustVolume = (groupIndex, soundIndex, amount) => {
         groups.value[groupIndex].sounds[soundIndex].soundEntries.forEach((soundEntry, soundEntryIndex) => {
           const audioElementId = buildAudioElementId(groupIndex, soundIndex, soundEntryIndex);
           const audioElement = document.getElementById(audioElementId);
@@ -327,7 +327,7 @@
             return;
           }
 
-          audioElement. = Math.max(0, Math.min(1, audioElement. + amount));
+          audioElement.Volume = Math.max(0, Math.min(1, audioElement. + amount));
         });
       };
 
@@ -341,21 +341,21 @@
             return;
           }
 
-          audioElement. = 0;
+          audioElement.Volume = 0;
           audioElement.play();
           soundEntry.isPlaying = true;
 
           audioElement.fadeInInterval = setInterval(() => {
-            if (audioElement. >= 1) {
+            if (audioElement.Volume >= 1) {
               clearInterval(audioElement.fadeInInterval);
 
               return;
             }
 
-            if (audioElement. + 0.015 > 1) {
-              audioElement. = 1;
+            if (audioElement.Volume + 0.015 > 1) {
+              audioElement.Volume = 1;
             } else {
-              audioElement. += 0.015;
+              audioElement.Volume += 0.015;
             }
           }, 100);
         });
@@ -504,7 +504,7 @@
         background,
         setBackground,
         groups,
-        adjust,
+        adjustVolume,
         fav,
         fadeOut,
         mute,
