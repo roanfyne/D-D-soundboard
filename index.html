@@ -296,6 +296,12 @@
       const buildAudioElementId = (groupIndex, soundIndex, soundEntryIndex) => {
         return `audio-${groupIndex}-${soundIndex}-${soundEntryIndex}`;
       };
+      
+      const toggleFavorite = (groupIndex, soundIndex) => {
+  const sound = groups.value[groupIndex].sounds[soundIndex];
+  if (!sound) return;
+  sound.favorite = !sound.favorite; // visual only
+};
 
       const logErrorMessageNonExistingAudioElement = (id) => {
         console.error('There is no audio-Element with id "' + id + '"');
@@ -545,6 +551,7 @@
         stop,
         updateProgress,
         toggleLoop,
+        toggleFavorite,
         anySoundIsPlaying,
         anySoundEntryIsPlaying,
       };
